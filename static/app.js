@@ -43,8 +43,31 @@ function on(id, event, handler) {
   el.addEventListener(event, handler);
 }
 
+function refreshMapViewport() {
+  if (!state.map) return;
+  setTimeout(() => {
+    if (!state.map) return;
+    state.map.invalidateSize();
+    const pending = state.pendingCurrentStation;
+    const fallback = state.gameState?.players?.find((p) => p.user_id === state.userId) || null;
+    const pos = pending
+      ? [Number(pending.lat), Number(pending.lon)]
+      : fallback
+        ? [Number(fallback.lat), Number(fallback.lon)]
+        : null;
+    if (pos && Number.isFinite(pos[0]) && Number.isFinite(pos[1])) {
+      state.map.setView(pos, Math.max(state.map.getZoom(), 13), { animate: false });
+      state.lastFollowPos = pos;
+      state.didInitialFollow = true;
+    }
+  }, 0);
+}
+
 function showScreen(id) {
   for (const s of screens) $(s).classList.toggle("hidden", s !== id);
+  if (id === "screenGame") {
+    refreshMapViewport();
+  }
 }
 
 function authHeaders() {
@@ -878,7 +901,7 @@ function renderGame(data) {
   const shownName = pendingName || (me ? me.current_station_name : "-");
   $("currentStation").textContent = `現在地: ${shownName || "-"}`;
   renderMapLeaflet(data, me);
-  // renderLogs(data); // Hide logs to avoid spoilers during gameplay
+  renderLogs(data);
 }
 
 function renderMapLeaflet(data, me) {
@@ -1691,9 +1714,14 @@ async function startGameFromLobby() {
   await refreshState();
 }
 
+function getPollIntervalMs(data = state.gameState) {
+  const mode = data?.game?.mode || "";
+  return ["multi_race", "multi_station_count"].includes(mode) ? 10000 : 5000;
+}
+
 function startPolling() {
   stopPolling();
-  state.pollTimer = setInterval(async () => {
+  const tick = async () => {
     if (!state.currentGameCode) return;
     try {
       const data = await api(`/api/games/${state.currentGameCode}`);
@@ -1702,8 +1730,10 @@ function startPolling() {
       if (multiWaiting) {
         stopWaitingCountdown();
         renderLobby(data);
+        showScreen("screenLobby");
         return;
       }
+      showScreen("screenGame");
       renderGame(data);
       if (state.stagePlayback) return;
       const me = data.players.find((p) => p.user_id === state.userId);
@@ -1715,15 +1745,23 @@ function startPolling() {
       } else if (state.pendingPath || state.pendingCurrentStation) {
         // keep current guidance state; don't reset turn flow mid-move
         return;
+      } else {
+        stopWaitingCountdown();
+        await openTurnFlow();
       }
     } catch {
       // noop
+    } finally {
+      if (state.currentGameCode) {
+        state.pollTimer = setTimeout(tick, getPollIntervalMs(state.gameState));
+      }
     }
-  }, 5000);
+  };
+  state.pollTimer = setTimeout(tick, getPollIntervalMs());
 }
 
 function stopPolling() {
-  if (state.pollTimer) clearInterval(state.pollTimer);
+  if (state.pollTimer) clearTimeout(state.pollTimer);
   state.pollTimer = null;
   stopWaitingCountdown();
 }
