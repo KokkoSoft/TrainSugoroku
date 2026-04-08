@@ -139,8 +139,8 @@ async function applyLastCreate() {
 
 async function applyDefaultCreate() {
   const defaultCity = "名古屋";
-  const defaultStartLine = "名古屋市|1号線(東山線)";
-  const defaultGoalLine = "名古屋市|4号線(名城線)";
+  const defaultStartLine = "名古屋市|1号線東山線";
+  const defaultGoalLine = "名古屋市|4号線名城線";
   const defaultStart = "名古屋";
   const defaultGoal = "金山";
   if (!state.cities.includes(defaultCity)) return;
