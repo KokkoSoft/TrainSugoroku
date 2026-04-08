@@ -293,7 +293,7 @@ def load_city_graph(city: str) -> SubwayGraph:
 
 
 def supported_cities() -> List[str]:
-    return sorted(CITY_OPERATORS.keys())
+    return list(CITY_OPERATORS.keys())
 
 
 def line_station_candidates(city: str, line_key: str) -> List[Dict[str, str]]:
