@@ -90,6 +90,51 @@ pre {
   margin: 6px 0;
 }
 
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.modal-card {
+  position: relative;
+  width: min(680px, 100%);
+  max-height: 80vh;
+  overflow: auto;
+  background: #fffdf8;
+  border: 2px solid var(--line);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.2);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.modal-head h2 {
+  margin: 0;
+}
+
+.modal-body {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
 .flow-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(180px, 1fr));

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>トレインすごろく</title>
-  <link rel="stylesheet" href="/static/style.css?v=20260310o" />
+  <link rel="stylesheet" href="/static/style.css?v=20260408a" />
   <link
     rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -128,6 +128,9 @@
         <div class="field-row">
           <button id="createGameBtn" class="primary-btn">ゲーム作成</button>
         </div>
+        <div class="field-row">
+          <button id="rulesBtnCreate" class="pill-btn" type="button">ルールを見る</button>
+        </div>
         <p id="createInfo" class="mono"></p>
       </div>
 
@@ -142,6 +145,9 @@
         </div>
         <p class="warn">ゲーム開始後は途中参加できません。</p>
       </div>
+      <div class="field-row">
+        <button id="logoutBtnCreate" class="pill-btn" type="button">ログアウト</button>
+      </div>
       <button class="home-btn" type="button">ホーム</button>
     </section>
 
@@ -153,6 +159,7 @@
       <div class="row">
         <button id="startGameBtn">ゲーム開始</button>
         <button id="refreshLobbyBtn">更新</button>
+        <button id="logoutBtnLobby" type="button">ログアウト</button>
       </div>
       <ul id="lobbyPlayers" class="plain-list"></ul>
     </section>
@@ -179,17 +186,41 @@
       </div>
 
       <div class="row hidden" aria-hidden="true"></div>
+      <div class="row">
+        <button id="rulesBtnGame" type="button">ルールを見る</button>
+        <button id="logoutBtnGame" type="button">ログアウト</button>
+      </div>
       <p id="routeResult" class="result"></p>
       <h3>ログ</h3>
       <ul id="actionLogs" class="plain-list"></ul>
     </section>
   </main>
 
+  <div id="rulesModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop" id="rulesModalBackdrop"></div>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <div class="modal-head">
+        <h2 id="rulesTitle">ルール</h2>
+        <button id="rulesCloseBtn" class="pill-btn" type="button">閉じる</button>
+      </div>
+      <div class="modal-body">
+        <ul class="plain-list">
+          <li>毎ターン、路線ルーレットと方面ルーレット、サイコロで進み方が決まります。</li>
+          <li>サイコロで出たマス数だけ進み、駅に到着したらチェックインします。</li>
+          <li>途中で乗り換え駅に着いた場合は、その駅で乗り換えルーレットを行います。</li>
+          <li>乗り換えチェックインの案内が出たときは、駅のホームに着いてからチェックインしてください。</li>
+          <li>ゴールありモードでは、指定されたゴール駅に先に到着したプレイヤーが有利です。</li>
+          <li>複数人モードでは、開始後の途中参加はできません。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
   <script
     src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
     crossorigin=""
   ></script>
-  <script src="/static/app.js?v=20260310y"></script>
+  <script src="/static/app.js?v=20260408a"></script>
 </body>
 </html>

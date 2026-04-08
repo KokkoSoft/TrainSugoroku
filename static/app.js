@@ -38,6 +38,12 @@ const state = {
 const $ = (id) => document.getElementById(id);
 const screens = ["screenLogin", "screenCreate", "screenLobby", "screenGame"];
 
+function on(id, event, handler) {
+  const el = $(id);
+  if (!el) return;
+  el.addEventListener(event, handler);
+}
+
 function showScreen(id) {
   for (const s of screens) $(s).classList.toggle("hidden", s !== id);
 }
@@ -1750,30 +1756,30 @@ function logout() {
 }
 
 function wire() {
-  $("requestCodeBtn").addEventListener("click", () => run(requestCode));
-  $("verifyCodeBtn").addEventListener("click", () => run(verifyCode));
-  $("saveNicknameBtn").addEventListener("click", () => run(saveNickname));
-  $("iconUploadBtn").addEventListener("click", () => run(uploadIconImage));
-  $("iconInput").addEventListener("input", () => updateIconPreview($("iconInput").value));
-  $("profileToggleBtn").addEventListener("click", () => {
+  on("requestCodeBtn", "click", () => run(requestCode));
+  on("verifyCodeBtn", "click", () => run(verifyCode));
+  on("saveNicknameBtn", "click", () => run(saveNickname));
+  on("iconUploadBtn", "click", () => run(uploadIconImage));
+  on("iconInput", "input", () => updateIconPreview($("iconInput").value));
+  on("profileToggleBtn", "click", () => {
     $("profilePanel").classList.toggle("hidden");
   });
-  $("city").addEventListener("change", () => run(loadRouteBasedStationSelectors));
-  $("startLine").addEventListener("change", () => run(() => loadStations("start")));
-  $("goalLine").addEventListener("change", () => run(() => loadStations("goal")));
-  $("createGameBtn").addEventListener("click", () => run(createGame));
-  $("joinBtn").addEventListener("click", () => run(joinGame));
-  $("startGameBtn").addEventListener("click", () => run(startGameFromLobby));
-  $("refreshLobbyBtn").addEventListener("click", () => run(refreshState));
-  $("rulesBtnCreate").addEventListener("click", openRules);
-  $("rulesBtnGame").addEventListener("click", openRules);
-  $("rulesCloseBtn").addEventListener("click", closeRules);
-  $("rulesModalBackdrop").addEventListener("click", closeRules);
-  $("logoutBtnCreate").addEventListener("click", logout);
-  $("logoutBtnLobby").addEventListener("click", logout);
-  $("logoutBtnGame").addEventListener("click", logout);
-  $("startRouletteBtn").addEventListener("click", () => run(() => roulettePickStation("start")));
-  $("goalRouletteBtn").addEventListener("click", () => run(() => roulettePickStation("goal")));
+  on("city", "change", () => run(loadRouteBasedStationSelectors));
+  on("startLine", "change", () => run(() => loadStations("start")));
+  on("goalLine", "change", () => run(() => loadStations("goal")));
+  on("createGameBtn", "click", () => run(createGame));
+  on("joinBtn", "click", () => run(joinGame));
+  on("startGameBtn", "click", () => run(startGameFromLobby));
+  on("refreshLobbyBtn", "click", () => run(refreshState));
+  on("rulesBtnCreate", "click", openRules);
+  on("rulesBtnGame", "click", openRules);
+  on("rulesCloseBtn", "click", closeRules);
+  on("rulesModalBackdrop", "click", closeRules);
+  on("logoutBtnCreate", "click", logout);
+  on("logoutBtnLobby", "click", logout);
+  on("logoutBtnGame", "click", logout);
+  on("startRouletteBtn", "click", () => run(() => roulettePickStation("start")));
+  on("goalRouletteBtn", "click", () => run(() => roulettePickStation("goal")));
   document.querySelectorAll("input[name='playType']").forEach((el) => {
     el.addEventListener("change", updateCreateFormByType);
   });
