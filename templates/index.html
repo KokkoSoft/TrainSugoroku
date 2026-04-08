@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>トレインすごろく</title>
+  <link rel="stylesheet" href="/static/style.css?v=20260310o" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+</head>
+<body>
+  <main class="container">
+    <h1>トレインすごろく</h1>
+
+    <section id="screenLogin" class="card">
+      <h2>1. ログイン / アカウント作成</h2>
+      <p>メールアドレスで認証します。</p>
+      <div class="row">
+        <input id="email" placeholder="email@example.com" />
+        <button id="requestCodeBtn">認証コード送信</button>
+      </div>
+      <div class="row">
+        <input id="code" placeholder="6桁コード" />
+        <button id="verifyCodeBtn">ログイン</button>
+      </div>
+      <p id="authInfo" class="mono"></p>
+    </section>
+
+    <section id="screenCreate" class="card hidden create-screen">
+      <div class="create-hero">
+        <div class="create-title">トレインすごろく</div>
+        <div class="create-sub">ゲーム作成</div>
+      </div>
+
+      <div class="create-profile">
+        <div class="profile-header">
+          <div class="profile-badge">プロフィール</div>
+          <button id="profileToggleBtn" class="pill-btn" type="button">プロフィール設定</button>
+        </div>
+        <div class="profile-fields hidden" id="profilePanel">
+          <label>ニックネーム</label>
+          <input id="nicknameInput" placeholder="表示名" maxlength="30" />
+          <label>自分アイコン</label>
+          <input id="iconInput" placeholder="🚃 または URL" />
+          <label>画像アップ</label>
+          <input id="iconFile" type="file" accept="image/*" />
+          <div id="iconPreview" class="icon-preview">🚃</div>
+          <button id="iconUploadBtn" class="pill-btn" type="button">画像アップロード</button>
+          <button id="saveNicknameBtn" class="pill-btn">保存</button>
+          <span id="nicknameInfo" class="mono"></span>
+        </div>
+      </div>
+
+      <div class="create-form">
+        <div class="field-row">
+          <label>都市</label>
+          <select id="city"></select>
+        </div>
+        <div class="field-row">
+          <label>プレイ人数</label>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="playType" value="solo" checked /> 1人</label>
+            <label class="chip"><input type="radio" name="playType" value="multi" /> 複数人</label>
+          </div>
+        </div>
+        <div class="field-row">
+          <label id="multiModeLabel" class="hidden">複数人モード</label>
+          <select id="multiMode" class="hidden">
+            <option value="multi_race">先着順位</option>
+            <option value="multi_station_count">降車駅数勝負</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label>参加人数</label>
+          <select id="playerCount">
+            <option value="1">1人</option>
+            <option value="2">2人</option>
+            <option value="3">3人</option>
+            <option value="4">4人</option>
+            <option value="5">5人</option>
+            <option value="6">6人</option>
+            <option value="7">7人</option>
+            <option value="8">8人</option>
+            <option value="9">9人</option>
+            <option value="10">10人</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <label>スタート路線</label>
+          <select id="startLine"></select>
+        </div>
+        <div class="field-row">
+          <label>スタート駅</label>
+          <select id="startStation"></select>
+          <button id="startRouletteBtn" type="button" class="pill-btn">スタートをルーレットで決める</button>
+        </div>
+        <div class="field-row" id="goalRow">
+          <label>ゴール路線</label>
+          <select id="goalLine"></select>
+        </div>
+        <div class="field-row">
+          <label>ゴール駅</label>
+          <select id="goalStation"></select>
+          <label class="chip"><input type="checkbox" id="goalEnabled" checked /> ゴールあり</label>
+          <button id="goalRouletteBtn" type="button" class="pill-btn">ゴールをルーレットで決める</button>
+        </div>
+        <div class="mini-roulette" id="createRoulette">
+          <div class="mini-roulette-title" id="createRouletteTitle">ルーレット</div>
+          <div class="mini-roulette-choices" id="createRouletteChoices"></div>
+          <div class="roulette small">
+          <canvas class="roulette-canvas" id="createRouletteWheel" width="400" height="400"></canvas>
+          <div class="roulette-pointer"></div>
+          </div>
+          <div class="mini-roulette-result" id="createRouletteResult"></div>
+        </div>
+        <div class="field-row">
+          <label>駅に滞在する時間</label>
+          <input id="minStay" type="number" min="0" max="120" value="3" />
+        </div>
+        <div class="field-row hidden" id="passwordRow">
+          <label>参加パスワード</label>
+          <input id="joinPasswordCreate" placeholder="参加者に共有するパスワード" />
+        </div>
+        <div class="field-row">
+          <button id="createGameBtn" class="primary-btn">ゲーム作成</button>
+        </div>
+        <p id="createInfo" class="mono"></p>
+      </div>
+
+      <div class="create-join">
+        <div class="create-join-title">参加リンクから参加</div>
+        <div class="field-row">
+          <input id="joinCode" placeholder="ゲームコード" />
+        </div>
+        <div class="field-row">
+          <input id="joinPasswordJoin" placeholder="参加パスワード" />
+          <button id="joinBtn" class="pill-btn">参加する</button>
+        </div>
+        <p class="warn">ゲーム開始後は途中参加できません。</p>
+      </div>
+      <button class="home-btn" type="button">ホーム</button>
+    </section>
+
+    <section id="screenLobby" class="card hidden">
+      <h2>3. ロビー（複数人）</h2>
+      <p id="lobbyGameInfo"></p>
+      <p>参加リンク: <a id="joinUrl" href="#" target="_blank" rel="noreferrer"></a></p>
+      <p class="warn">開始すると途中参加不可になります。</p>
+      <div class="row">
+        <button id="startGameBtn">ゲーム開始</button>
+        <button id="refreshLobbyBtn">更新</button>
+      </div>
+      <ul id="lobbyPlayers" class="plain-list"></ul>
+    </section>
+
+    <section id="screenGame" class="card hidden">
+      <h2>ゲーム</h2>
+      <p id="gameSummary"></p>
+      <p id="currentStation"></p>
+      <div class="map-wrap">
+        <div class="map-head">現在地マップ</div>
+        <div id="map"></div>
+      </div>
+
+      <div class="turn-stage" id="turnStage">
+        <p class="stage-label" id="stageLabel"></p>
+        <h3 id="stageTitle"></h3>
+        <p id="stageChoices"></p>
+        <div class="roulette hidden" id="rouletteWrap">
+          <canvas class="roulette-canvas" id="rouletteWheel" width="520" height="520"></canvas>
+          <div class="roulette-pointer"></div>
+        </div>
+        <button id="stageActionBtn">開始</button>
+        <p id="stageResult" class="result"></p>
+      </div>
+
+      <div class="row hidden" aria-hidden="true"></div>
+      <p id="routeResult" class="result"></p>
+      <h3>ログ</h3>
+      <ul id="actionLogs" class="plain-list"></ul>
+    </section>
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <script src="/static/app.js?v=20260310y"></script>
+</body>
+</html>

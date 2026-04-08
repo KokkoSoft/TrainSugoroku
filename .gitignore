@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+train_sugoroku.db
+.DS_Store
+static/uploads/*
+!static/uploads/.gitkeep
