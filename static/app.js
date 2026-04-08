@@ -227,6 +227,12 @@ async function loadRouteBasedStationSelectors() {
   await applyLastCreate();
 }
 
+async function handleCityChange() {
+  await loadLines();
+  await loadStations("start");
+  await loadStations("goal");
+}
+
 async function requestCode() {
   const email = $("email").value.trim();
   if (!email) throw new Error("メールアドレスを入力してください");
@@ -921,6 +927,7 @@ function renderMapLeaflet(data, me) {
     }
   }
 
+  let followPos = null;
   const pending = state.pendingCurrentStation;
   for (const p of players) {
     const iconHtml = `<div style="font-size:20px">${p.icon || "🚃"}</div>`;
@@ -940,6 +947,9 @@ function renderMapLeaflet(data, me) {
     }
     if (!Number.isFinite(pos[0]) || !Number.isFinite(pos[1])) continue;
     const stationName = isMe && pending?.name ? pending.name : (p.station_name || p.current_station_name || "");
+    if (isMe) {
+      followPos = pos;
+    }
     if (state.mapMarkers.has(p.user_id)) {
       const m = state.mapMarkers.get(p.user_id);
       m.setLatLng(pos).setIcon(icon);
@@ -949,12 +959,24 @@ function renderMapLeaflet(data, me) {
       m.bindPopup(`${p.display_name} / ${stationName}`);
       state.mapMarkers.set(p.user_id, m);
     }
-    if (isMe) {
-      const last = state.lastFollowPos;
-      if (!last || last[0] !== pos[0] || last[1] !== pos[1]) {
-        state.map.setView(pos, Math.max(state.map.getZoom(), 13), { animate: true });
-        state.lastFollowPos = pos;
-      }
+  }
+
+  if (!followPos && myPlayer) {
+    const fallbackPos = [
+      Number(pending?.lat ?? myPlayer.lat),
+      Number(pending?.lon ?? myPlayer.lon),
+    ];
+    if (Number.isFinite(fallbackPos[0]) && Number.isFinite(fallbackPos[1])) {
+      followPos = fallbackPos;
+    }
+  }
+
+  if (followPos) {
+    const last = state.lastFollowPos;
+    if (!last || last[0] !== followPos[0] || last[1] !== followPos[1] || !state.didInitialFollow) {
+      state.map.setView(followPos, Math.max(state.map.getZoom(), 13), { animate: true });
+      state.lastFollowPos = followPos;
+      state.didInitialFollow = true;
     }
   }
 
@@ -1767,7 +1789,7 @@ function wire() {
   on("profileToggleBtn", "click", () => {
     $("profilePanel").classList.toggle("hidden");
   });
-  on("city", "change", () => run(loadRouteBasedStationSelectors));
+  on("city", "change", () => run(handleCityChange));
   on("startLine", "change", () => run(() => loadStations("start")));
   on("goalLine", "change", () => run(() => loadStations("goal")));
   on("createGameBtn", "click", () => run(createGame));
