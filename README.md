@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # TrainSugoroku
 地下鉄や電車を使ったすごろくゲーム
 =======
@@ -43,4 +42,3 @@ uvicorn app.main:app --reload
 ## 注意
 - 現在は簡易実装のため、路線内の駅接続は地理的近傍にもとづく推定です。
 - 本番用メール送信（SMTP/API）は未接続です。
->>>>>>> c510671 (Initial commit)
