@@ -1697,6 +1697,58 @@ function stopPolling() {
   stopWaitingCountdown();
 }
 
+function openRules() {
+  $("rulesModal").classList.remove("hidden");
+  $("rulesModal").setAttribute("aria-hidden", "false");
+}
+
+function closeRules() {
+  $("rulesModal").classList.add("hidden");
+  $("rulesModal").setAttribute("aria-hidden", "true");
+}
+
+function logout() {
+  stopPolling();
+  state.token = "";
+  state.userId = null;
+  state.displayName = "";
+  state.icon = "🚃";
+  state.currentGameCode = "";
+  state.gameState = null;
+  state.selectedLineKey = null;
+  state.selectedDirectionStationId = null;
+  state.rollOptions = null;
+  state.pendingPath = null;
+  state.pendingDest = null;
+  state.pendingArrow = null;
+  state.pendingDestReady = false;
+  state.hidePendingPath = false;
+  state.routeTrailPoints = null;
+  state.pendingCurrentStation = null;
+  state.recentPath = null;
+  state.recentPathGroup = null;
+  state.holdCheckinStage = false;
+  localStorage.removeItem("ts_token");
+  $("email").value = "";
+  $("code").value = "";
+  $("authInfo").textContent = "";
+  $("createInfo").textContent = "";
+  $("lobbyGameInfo").textContent = "";
+  $("routeResult").textContent = "";
+  $("stageResult").textContent = "";
+  $("currentStation").textContent = "";
+  if (state.map) {
+    state.map.remove();
+    state.map = null;
+  }
+  state.mapMarkers = new Map();
+  state.mapRoute = null;
+  state.lastFollowPos = null;
+  state.didInitialFollow = false;
+  showScreen("screenLogin");
+  startPolling();
+}
+
 function wire() {
   $("requestCodeBtn").addEventListener("click", () => run(requestCode));
   $("verifyCodeBtn").addEventListener("click", () => run(verifyCode));
@@ -1713,6 +1765,13 @@ function wire() {
   $("joinBtn").addEventListener("click", () => run(joinGame));
   $("startGameBtn").addEventListener("click", () => run(startGameFromLobby));
   $("refreshLobbyBtn").addEventListener("click", () => run(refreshState));
+  $("rulesBtnCreate").addEventListener("click", openRules);
+  $("rulesBtnGame").addEventListener("click", openRules);
+  $("rulesCloseBtn").addEventListener("click", closeRules);
+  $("rulesModalBackdrop").addEventListener("click", closeRules);
+  $("logoutBtnCreate").addEventListener("click", logout);
+  $("logoutBtnLobby").addEventListener("click", logout);
+  $("logoutBtnGame").addEventListener("click", logout);
   $("startRouletteBtn").addEventListener("click", () => run(() => roulettePickStation("start")));
   $("goalRouletteBtn").addEventListener("click", () => run(() => roulettePickStation("goal")));
   document.querySelectorAll("input[name='playType']").forEach((el) => {
