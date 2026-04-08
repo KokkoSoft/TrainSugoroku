@@ -129,18 +129,19 @@ async function applyLastCreate() {
 }
 
 async function applyDefaultCreate() {
-  const defaultCity = "大阪";
-  const defaultLine = "大阪市高速電気軌道|1号線(御堂筋線)";
-  const defaultStart = "梅田";
-  const defaultGoal = "難波";
+  const defaultCity = "名古屋";
+  const defaultStartLine = "名古屋市|1号線(東山線)";
+  const defaultGoalLine = "名古屋市|4号線(名城線)";
+  const defaultStart = "名古屋";
+  const defaultGoal = "金山";
   if (!state.cities.includes(defaultCity)) return;
   $("city").value = defaultCity;
   await loadLines();
-  if (Array.from($("startLine").options).some((o) => o.value === defaultLine)) {
-    $("startLine").value = defaultLine;
+  if (Array.from($("startLine").options).some((o) => o.value === defaultStartLine)) {
+    $("startLine").value = defaultStartLine;
   }
-  if (Array.from($("goalLine").options).some((o) => o.value === defaultLine)) {
-    $("goalLine").value = defaultLine;
+  if (Array.from($("goalLine").options).some((o) => o.value === defaultGoalLine)) {
+    $("goalLine").value = defaultGoalLine;
   }
   await loadStations("start");
   await loadStations("goal");
@@ -819,6 +820,35 @@ function findStationIndexByName(pathStations, pathNames, targetName, startIdx = 
   return -1;
 }
 
+function buildPendingPathSegment(pathStations, pathNames, transferNames, startIdx = 0) {
+  const safeStartIdx = Math.max(0, startIdx);
+  if (!Array.isArray(pathStations) || pathStations.length - safeStartIdx < 2) {
+    return { pendingPath: null, pendingDestReady: false };
+  }
+
+  let endIdx = pathStations.length - 1;
+  let hasUpcomingTransfer = false;
+  for (const name of transferNames || []) {
+    const idx = findStationIndexByName(pathStations, pathNames, name, safeStartIdx + 1);
+    if (idx !== -1) {
+      endIdx = idx;
+      hasUpcomingTransfer = true;
+      break;
+    }
+  }
+
+  const segment = pathStations.slice(safeStartIdx, endIdx + 1);
+  const points = segment
+    .map((s) => [Number(s.lat), Number(s.lon)])
+    .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
+  const stationIds = segment.map((s) => String(s.station_id));
+  const stationNames = segment.map((s) => String(s.station_name || s.name || ""));
+  return {
+    pendingPath: points.length >= 2 ? { points, stationIds, stationNames } : null,
+    pendingDestReady: !hasUpcomingTransfer,
+  };
+}
+
 async function fetchRollOptions(selectedLineKey = null) {
   const q = selectedLineKey ? `?selected_line_key=${encodeURIComponent(selectedLineKey)}` : "";
   state.rollOptions = await api(`/api/games/${state.currentGameCode}/roll-options${q}`);
@@ -1427,18 +1457,10 @@ async function rollDice() {
     const updatePendingToIndex = (idx) => {
       if (idx < 1) return;
       const current = pathStations[idx];
-      const remaining = pathStations.slice(idx);
-      if (remaining.length >= 2) {
-        const pts = remaining
-          .map((s) => [Number(s.lat), Number(s.lon)])
-          .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
-        const ids = remaining.map((s) => String(s.station_id));
-        const names = remaining.map((s) => String(s.station_name || s.name || ""));
-        if (pts.length >= 2) {
-          state.pendingPath = { points: pts, stationIds: ids, stationNames: names };
-          state.pendingDestReady = false;
-        }
-      }
+      const upcomingTransferNames = transfers.map((x) => x.at_station_name);
+      const nextSegment = buildPendingPathSegment(pathStations, pathNames, upcomingTransferNames, idx);
+      state.pendingPath = nextSegment.pendingPath;
+      state.pendingDestReady = nextSegment.pendingDestReady;
       if (current) applyPendingCurrentStation(current);
     };
 
@@ -1512,7 +1534,7 @@ async function rollDice() {
         setStage({
           label: "乗り換えチェックイン",
           title: `${t.at_station_name}駅に到着`,
-          choices: "駅に到着したらチェックインしてください",
+          choices: "駅のホームに着いたらチェックインしてください",
           buttonText: "チェックイン",
           result: "",
         });
@@ -1524,14 +1546,14 @@ async function rollDice() {
           .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
         appendTrailPoints(traveledPts);
 
-        const remaining = pathStations.slice(progressIndex);
-        const remainingPts = remaining
-          .map((s) => [Number(s.lat), Number(s.lon)])
-          .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
-        const remainingIds = remaining.map((s) => String(s.station_id));
-        const remainingNames = remaining.map((s) => String(s.station_name || s.name || ""));
-        state.pendingPath = remainingPts.length >= 2 ? { points: remainingPts, stationIds: remainingIds, stationNames: remainingNames } : null;
-        state.pendingDestReady = false;
+        const nextSegment = buildPendingPathSegment(
+          pathStations,
+          pathNames,
+          transfers.slice(i + 1).map((x) => x.at_station_name),
+          progressIndex,
+        );
+        state.pendingPath = nextSegment.pendingPath;
+        state.pendingDestReady = nextSegment.pendingDestReady;
       }
 
       state.hidePendingPath = false;
@@ -1576,16 +1598,14 @@ async function rollDice() {
     showRoulette(false);
     if (pathStations.length >= 2) {
       const startIdx = transfers.length ? Math.max(0, progressIndex) : 0;
-      const remainingStations = pathStations.slice(startIdx);
-      const pts = remainingStations
-        .map((s) => [Number(s.lat), Number(s.lon)])
-        .filter((p) => Number.isFinite(p[0]) && Number.isFinite(p[1]));
-      const ids = remainingStations.map((s) => String(s.station_id));
-      const names = remainingStations.map((s) => String(s.station_name || s.name || ""));
-      if (pts.length >= 2) {
-        state.pendingPath = { points: pts, stationIds: ids, stationNames: names };
-        state.pendingDestReady = true;
-      }
+      const nextSegment = buildPendingPathSegment(
+        pathStations,
+        pathNames,
+        [],
+        startIdx,
+      );
+      state.pendingPath = nextSegment.pendingPath;
+      state.pendingDestReady = nextSegment.pendingDestReady;
     }
     state.hidePendingPath = false;
     state.stagePlayback = false;
