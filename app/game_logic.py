@@ -367,11 +367,15 @@ def join_game(user_id: int, game_code: str, join_password: Optional[str]) -> Non
             raise ValueError("game not found")
         if not _is_multi_mode(game["mode"]):
             raise ValueError("solo game cannot be joined")
-        if game["status"] != "waiting":
-            raise ValueError("game already started. 途中参加不可")
+        existing = conn.execute(
+            "SELECT 1 FROM game_players WHERE game_id=? AND user_id=? LIMIT 1",
+            (game["id"], user_id),
+        ).fetchone()
+        if game["status"] != "waiting" and not existing:
+            raise ValueError("game already started. 新規参加不可")
         if (game["join_password"] or "") != (join_password or ""):
             raise ValueError("invalid password")
-        if int(game["max_players"] or 0) > 0:
+        if not existing and int(game["max_players"] or 0) > 0:
             count = conn.execute("SELECT COUNT(*) AS c FROM game_players WHERE game_id=?", (game["id"],)).fetchone()["c"]
             if count >= int(game["max_players"]):
                 raise ValueError("game is full")
@@ -628,7 +632,7 @@ def get_game_state(user_id: int, game_code: str) -> Dict[str, Any]:
                 "is_creator": is_creator,
                 "can_start": can_start,
                 "join_url": f"/?join={game['game_code']}",
-                "join_blocked_message": "ゲーム開始後は途中参加できません",
+                "join_blocked_message": "ゲーム開始後は新規参加できません",
             },
             "players": players,
             "ranking": ranking,
