@@ -68,28 +68,20 @@
         </div>
         <p class="section-desc">乗車駅とゴールを選び、全国地下鉄の旅をスタートします。</p>
 
-        <div class="create-hero">
-          <div>
-            <div class="create-title">トレインすごろく</div>
-            <div class="create-sub">みんなで駅旅</div>
-          </div>
-        </div>
-
         <div class="create-profile">
           <div class="profile-header">
-            <div class="profile-badge">プロフィール</div>
             <button id="profileToggleBtn" class="pill-btn" type="button">プロフィール設定</button>
           </div>
           <div class="profile-fields hidden" id="profilePanel">
             <label>ニックネーム</label>
             <input id="nicknameInput" placeholder="表示名" maxlength="30" />
-            <label>自分アイコン</label>
-            <input id="iconInput" placeholder="🚃 または URL" />
+            <label>アイコン</label>
+            <input id="iconInput" placeholder="🚃 または画像URL" maxlength="300" />
             <label>画像アップ</label>
             <input id="iconFile" type="file" accept="image/*" />
-            <div id="iconPreview" class="icon-preview">🚃</div>
+            <div id="iconPreview" class="icon-preview"></div>
             <button id="iconUploadBtn" class="pill-btn" type="button">画像アップロード</button>
-            <button id="saveNicknameBtn" class="pill-btn">保存</button>
+            <button id="saveNicknameBtn" class="pill-btn" type="button">保存</button>
             <span id="nicknameInfo" class="mono"></span>
           </div>
         </div>
@@ -124,7 +116,7 @@
           <div class="field-row">
             <label>スタート駅</label>
             <select id="startStation"></select>
-            <button id="startRouletteBtn" type="button" class="pill-btn">スタートをルーレットで決める</button>
+            <button id="startRouletteBtn" type="button" class="pill-btn">スタートをランダムで決める</button>
           </div>
           <div class="field-row" id="goalRow">
             <label>ゴール路線</label>
@@ -133,17 +125,7 @@
           <div class="field-row">
             <label>ゴール駅</label>
             <select id="goalStation"></select>
-            <label class="chip"><input type="checkbox" id="goalEnabled" checked /> ゴールあり</label>
-            <button id="goalRouletteBtn" type="button" class="pill-btn">ゴールをルーレットで決める</button>
-          </div>
-          <div class="mini-roulette" id="createRoulette">
-            <div class="mini-roulette-title" id="createRouletteTitle">ルーレット</div>
-            <div class="mini-roulette-choices" id="createRouletteChoices"></div>
-            <div class="roulette small">
-              <canvas class="roulette-canvas" id="createRouletteWheel" width="400" height="400"></canvas>
-              <div class="roulette-pointer"></div>
-            </div>
-            <div class="mini-roulette-result" id="createRouletteResult"></div>
+            <button id="goalRandomBtn" type="button" class="goal-random-btn">ゴールをランダムに設定</button>
           </div>
           <div class="field-row">
             <label>駅に滞在する時間</label>

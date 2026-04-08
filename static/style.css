@@ -344,6 +344,69 @@ select {
   color: var(--ink);
 }
 
+select {
+  appearance: none;
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%230096c7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6,9 12,15 18,9"></polyline></svg>');
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+input[type="radio"] {
+  display: none;
+}
+
+.chip {
+  display: inline-block;
+  text-align: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: #eef8fb;
+  border: 2px solid rgba(0, 165, 189, 0.35);
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  writing-mode: horizontal-tb;
+}
+
+.chip:hover {
+  background: #e0f2f7;
+  border-color: rgba(0, 165, 189, 0.5);
+}
+
+.chip:has(input:checked) {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 150, 199, 0.3);
+}
+
+.goal-random-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 220px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(0, 165, 189, 0.28);
+  background: #fff;
+  color: var(--accent-dark);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.goal-random-btn:hover {
+  border-color: rgba(0, 165, 189, 0.5);
+  transform: translateY(-1px);
+  background: #f1fcff;
+}
+
 textarea {
   width: 100%;
   min-height: 120px;

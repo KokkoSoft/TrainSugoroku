@@ -99,7 +99,7 @@ function getPlayType() {
 function selectedMode() {
   const t = getPlayType();
   if (t === "multi") return $("multiMode").value;
-  return $("goalEnabled").checked ? "solo_goal" : "solo_endless";
+  return "solo_goal";
 }
 
 function updateCreateFormByType() {
@@ -109,7 +109,6 @@ function updateCreateFormByType() {
   $("passwordRow").classList.toggle("hidden", !multi);
   $("playerCount").value = multi ? "2" : "1";
   $("playerCount").disabled = !multi;
-  if (multi) $("goalEnabled").checked = true;
 }
 
 function lastCreateStorageKey() {
@@ -126,7 +125,6 @@ function saveLastCreate() {
     startStation: $("startStation").value,
     goalLine: $("goalLine").value,
     goalStation: $("goalStation").value,
-    goalEnabled: $("goalEnabled").checked,
     minStay: $("minStay").value,
   };
   localStorage.setItem(lastCreateStorageKey(), JSON.stringify(data));
@@ -156,7 +154,6 @@ async function applyLastCreate() {
   if (data.goalLine) $("goalLine").value = data.goalLine;
   await loadStations("goal");
   if (data.goalStation) $("goalStation").value = data.goalStation;
-  if (typeof data.goalEnabled === "boolean") $("goalEnabled").checked = data.goalEnabled;
   if (data.minStay) $("minStay").value = data.minStay;
 }
 
@@ -258,34 +255,47 @@ async function handleCityChange() {
 
 async function requestCode() {
   const email = $("email").value.trim();
+  const requestBtn = $("requestCodeBtn");
   if (!email) throw new Error("メールアドレスを入力してください");
-  const out = await api("/api/auth/request-code", "POST", { email });
-  $("authInfo").textContent = `開発用コード: ${out.dev_code} (期限: ${out.expires_at})`;
-  if (out.dev_code) {
-    $("code").value = out.dev_code;
-    await verifyCode();
+  if (requestBtn.disabled) return;
+  requestBtn.disabled = true;
+  try {
+    const out = await api("/api/auth/request-code", "POST", { email });
+    $("authInfo").textContent = `開発用コード: ${out.dev_code} (期限: ${out.expires_at})`;
+    if (out.dev_code) {
+      $("code").value = out.dev_code;
+    }
+  } finally {
+    requestBtn.disabled = false;
   }
 }
 
 async function verifyCode() {
   const email = $("email").value.trim();
   const code = $("code").value.trim();
+  const verifyBtn = $("verifyCodeBtn");
   if (!email) throw new Error("メールアドレスを入力してください");
   if (!code) throw new Error("コードを入力してください");
-  const out = await api("/api/auth/verify-code", "POST", { email, code });
-  state.token = out.token;
-  state.userId = out.user.id;
-  state.displayName = out.user.display_name;
-  state.icon = out.user.icon || "🚃";
-  localStorage.setItem("ts_token", state.token);
-  $("authInfo").textContent = `ログイン: ${out.user.display_name}`;
-  $("nicknameInput").value = out.user.display_name;
-  $("iconInput").value = state.icon;
-  updateIconPreview(state.icon);
-  $("nicknameInfo").textContent = "";
-  await loadRouteBasedStationSelectors();
-  showScreen("screenCreate");
-  applyJoinCodeFromQuery();
+  if (verifyBtn.disabled) return;
+  verifyBtn.disabled = true;
+  try {
+    const out = await api("/api/auth/verify-code", "POST", { email, code });
+    state.token = out.token;
+    state.userId = out.user.id;
+    state.displayName = out.user.display_name;
+    state.icon = out.user.icon || "🚃";
+    localStorage.setItem("ts_token", state.token);
+    $("authInfo").textContent = `ログイン: ${out.user.display_name}`;
+    $("nicknameInput").value = out.user.display_name;
+    $("iconInput").value = state.icon;
+    updateIconPreview(state.icon);
+    $("nicknameInfo").textContent = "";
+    await loadRouteBasedStationSelectors();
+    showScreen("screenCreate");
+    applyJoinCodeFromQuery();
+  } finally {
+    verifyBtn.disabled = false;
+  }
 }
 
 async function saveNickname() {
@@ -351,7 +361,7 @@ async function createGame() {
     mode,
     start_station_id: $("startStation").value,
     start_random: false,
-    goal_enabled: $("goalEnabled").checked,
+    goal_enabled: true,
     goal_station_id: $("goalStation").value,
     goal_random: false,
     join_password: playType === "multi" ? $("joinPasswordCreate").value : null,
@@ -749,41 +759,11 @@ async function roulettePickStation(target) {
   if (!state.lines.length) await loadLines();
   const lineEntries = state.lines.map((l) => ({ key: l.line_key, label: lineLabel(l.line_key) }));
   const pickedLine = pickRandom(lineEntries);
-  $("createRouletteTitle").textContent = `${target === "start" ? "スタート" : "ゴール"}路線ルーレット`;
-  $("createRouletteChoices").textContent = `候補: ${lineEntries.map((x) => x.label).join(" / ")}`;
-  $("createRouletteResult").textContent = "回転中...";
-  const lineLabels = lineEntries.map((x) => x.label);
-  drawRoulette($("createRouletteWheel"), lineLabels);
-  spinRouletteToValue($("createRouletteWheel"), lineLabels, pickedLine?.label || "");
-  startPointerSync($("createRouletteWheel"), lineLabels, (txt) => {
-    $("createRouletteResult").textContent = `決定: ${txt}`;
-  });
-  await waitWheelStop($("createRouletteWheel"));
-  stopPointerSync();
-  $("createRouletteResult").textContent = `決定: ${pickedLine?.label || ""}`;
-  // keep natural stop position
   $(lineId).value = pickedLine?.key || "";
   await loadStations(target);
   const stationSelect = $(stationId);
   const stationOptions = Array.from(stationSelect.options).map((o) => o.value);
   const pickedStation = pickRandom(stationOptions);
-  $("createRouletteTitle").textContent = `${target === "start" ? "スタート" : "ゴール"}駅ルーレット`;
-  $("createRouletteChoices").textContent = `候補: ${Array.from(stationSelect.options).map((o) => o.textContent).join(" / ")}`;
-  $("createRouletteResult").textContent = "回転中...";
-  const stationLabels = Array.from(stationSelect.options).map((o) => o.textContent);
-  drawRoulette($("createRouletteWheel"), stationLabels);
-  spinRouletteToValue(
-    $("createRouletteWheel"),
-    stationLabels,
-    stationSelect.options[stationOptions.indexOf(pickedStation)]?.textContent || "",
-  );
-  startPointerSync($("createRouletteWheel"), stationLabels, (txt) => {
-    $("createRouletteResult").textContent = `決定: ${txt}`;
-  });
-  await waitWheelStop($("createRouletteWheel"));
-  stopPointerSync();
-  $("createRouletteResult").textContent = `決定: ${stationSelect.options[stationOptions.indexOf(pickedStation)]?.textContent || ""}`;
-  // keep natural stop position
   stationSelect.value = pickedStation;
 }
 
@@ -1776,6 +1756,22 @@ function closeRules() {
   $("rulesModal").setAttribute("aria-hidden", "true");
 }
 
+async function randomGoal() {
+  const goalLineSelect = $("goalLine");
+  const options = Array.from(goalLineSelect.options);
+  if (options.length > 0) {
+    const randomOption = options[Math.floor(Math.random() * options.length)];
+    goalLineSelect.value = randomOption.value;
+    await loadStations("goal");
+    const goalStationSelect = $("goalStation");
+    const stationOptions = Array.from(goalStationSelect.options);
+    if (stationOptions.length > 0) {
+      const randomStation = stationOptions[Math.floor(Math.random() * stationOptions.length)];
+      goalStationSelect.value = randomStation.value;
+    }
+  }
+}
+
 function logout() {
   stopPolling();
   state.token = "";
@@ -1842,7 +1838,7 @@ function wire() {
   on("logoutBtnLobby", "click", logout);
   on("logoutBtnGame", "click", logout);
   on("startRouletteBtn", "click", () => run(() => roulettePickStation("start")));
-  on("goalRouletteBtn", "click", () => run(() => roulettePickStation("goal")));
+  on("goalRandomBtn", "click", () => run(randomGoal));
   document.querySelectorAll("input[name='playType']").forEach((el) => {
     el.addEventListener("change", updateCreateFormByType);
   });
@@ -1858,6 +1854,7 @@ async function run(fn) {
 
 (async function init() {
   wire();
+  closeRules();
   await loadConfig();
   showScreen("screenLogin");
 

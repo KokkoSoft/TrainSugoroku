@@ -172,6 +172,10 @@ def api_request_code(body: RequestCodeIn) -> Dict[str, Any]:
 def api_verify_code(body: VerifyCodeIn) -> Dict[str, Any]:
     email = body.email.strip().lower()
     code = body.code.strip()
+    if not _email_valid(email):
+        raise HTTPException(status_code=400, detail="invalid email")
+    if not code:
+        raise HTTPException(status_code=400, detail="code required")
 
     with get_conn() as conn:
         row = conn.execute("SELECT * FROM email_codes WHERE email=?", (email,)).fetchone()
@@ -197,15 +201,15 @@ def api_verify_code(body: VerifyCodeIn) -> Dict[str, Any]:
         )
         conn.execute("DELETE FROM email_codes WHERE email=?", (email,))
 
-        return {
-            "token": token,
-            "user": {
-                "id": user["id"],
-                "email": user["email"],
-                "display_name": user["display_name"],
-                "icon": user["icon"] or "🚃",
-            },
-        }
+    return {
+        "token": token,
+        "user": {
+            "id": user["id"],
+            "email": user["email"],
+            "display_name": user["display_name"],
+            "icon": user["icon"] or "🚃",
+        },
+    }
 
 
 @app.get("/api/me")
