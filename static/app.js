@@ -31,7 +31,6 @@ const state = {
   pointerSyncTimer: null,
   recentPath: null,
   recentPathGroup: null,
-  lastCreateKey: "ts_last_create",
   holdCheckinStage: false,
 };
 
@@ -90,6 +89,10 @@ function updateCreateFormByType() {
   if (multi) $("goalEnabled").checked = true;
 }
 
+function lastCreateStorageKey() {
+  return state.userId ? `ts_last_create_${state.userId}` : "ts_last_create";
+}
+
 function saveLastCreate() {
   const data = {
     city: $("city").value,
@@ -103,11 +106,11 @@ function saveLastCreate() {
     goalEnabled: $("goalEnabled").checked,
     minStay: $("minStay").value,
   };
-  localStorage.setItem(state.lastCreateKey, JSON.stringify(data));
+  localStorage.setItem(lastCreateStorageKey(), JSON.stringify(data));
 }
 
 async function applyLastCreate() {
-  const raw = localStorage.getItem(state.lastCreateKey);
+  const raw = localStorage.getItem(lastCreateStorageKey());
   if (!raw) {
     await applyDefaultCreate();
     return;
